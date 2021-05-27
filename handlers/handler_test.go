@@ -30,8 +30,8 @@ func TestHandler(t *testing.T) {
 
 }
 
-// Test getConfigInfo function inputting Indexd and Metadata Service configs
-func TestGetConfigInfoUsingIndexdAndMDSCreds(t *testing.T) {
+// Test mustGetConfigInfo function inputting Indexd and Metadata Service configs
+func TestMustGetConfigInfoUsingIndexdAndMDSCreds(t *testing.T) {
 	jsonConfigInfo :=
 		`
 	{
@@ -49,7 +49,7 @@ func TestGetConfigInfoUsingIndexdAndMDSCreds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	configInfo := getConfigInfo()
+	configInfo := mustGetConfigInfo()
 	assert.Equal(t, configInfo.Indexd.URL, "http://indexd-service/index")
 	assert.Equal(t, configInfo.Indexd.Username, "mr happy cat")
 	assert.Equal(t, configInfo.Indexd.Password, "whiskers")
@@ -59,12 +59,12 @@ func TestGetConfigInfoUsingIndexdAndMDSCreds(t *testing.T) {
 	assert.Equal(t, configInfo.MetadataService.Password, "paws")
 }
 
-// Test that getConfigInfo function panics when no Indexd or Metadata Service
+// Test that mustGetConfigInfo function panics when no Indexd or Metadata Service
 // config is present
-func TestGetConfigInfoWithoutIndexdOrMDSCreds(t *testing.T) {
+func TestMustGetConfigInfoWithoutIndexdOrMDSCreds(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("Expecting getConfigInfo to panic since Indexd and Metadata Service creds were not present in CONFIG_FILE")
+			t.Errorf("Expecting mustGetConfigInfo to panic since Indexd and Metadata Service creds were not present in CONFIG_FILE")
 		}
 	}()
 
@@ -76,15 +76,15 @@ func TestGetConfigInfoWithoutIndexdOrMDSCreds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	getConfigInfo()
+	mustGetConfigInfo()
 }
 
-// Test that getConfigInfo function panics when no Metadata Service config is
+// Test that mustGetConfigInfo function panics when no Metadata Service config is
 // present
-func TestGetConfigInfoWithoutMDSCreds(t *testing.T) {
+func TestMustGetConfigInfoWithoutMDSCreds(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("Expecting getConfigInfo to panic since Metadata Service creds were not present in CONFIG_FILE")
+			t.Errorf("Expecting mustGetConfigInfo to panic since Metadata Service creds were not present in CONFIG_FILE")
 		}
 	}()
 
@@ -100,14 +100,14 @@ func TestGetConfigInfoWithoutMDSCreds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	getConfigInfo()
+	mustGetConfigInfo()
 }
 
 // Test that getConfigInfo function panics when no Indexd config is present
-func TestGetConfigInfoWithoutIndexdCreds(t *testing.T) {
+func TestMustGetConfigInfoWithoutIndexdCreds(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("Expecting getConfigInfo to panic since Indexd creds were not present in CONFIG_FILE")
+			t.Errorf("Expecting mustGetConfigInfo to panic since Indexd creds were not present in CONFIG_FILE")
 		}
 	}()
 
@@ -125,11 +125,11 @@ func TestGetConfigInfoWithoutIndexdCreds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	getConfigInfo()
+	mustGetConfigInfo()
 }
 
-// Test getConfigInfo function inputting extra service config
-func TestGetConfigInfoUsingExtraServiceInfo(t *testing.T) {
+// Test mustGetConfigInfo function inputting extra service config
+func TestMustGetConfigInfoUsingExtraServiceInfo(t *testing.T) {
 	jsonConfigInfo :=
 		`
 	{
@@ -154,7 +154,7 @@ func TestGetConfigInfoUsingExtraServiceInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	configInfo := getConfigInfo()
+	configInfo := mustGetConfigInfo()
 	assert.Equal(t, configInfo.Indexd.URL, "http://indexd-service/index")
 	assert.Equal(t, configInfo.Indexd.Username, "mr happy cat")
 	assert.Equal(t, configInfo.Indexd.Password, "whiskers")

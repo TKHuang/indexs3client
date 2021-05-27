@@ -34,7 +34,7 @@ type MetadataServiceInfo struct {
 // Read Indexd and Metadata Service config info from CONFIG_FILE into
 // ConfigInfo struct. Panic if both Indexd config and Metadata Service
 // configs can't be unmarshalled
-func getConfigInfo() *ConfigInfo {
+func mustGetConfigInfo() *ConfigInfo {
 	configInfo := new(ConfigInfo)
 	configBytes := []byte(os.Getenv("CONFIG_FILE"))
 
@@ -61,8 +61,8 @@ func getConfigInfo() *ConfigInfo {
 // IndexS3Object indexes s3 object The fuction does several things. It
 // downloads the object from S3, computes size and hashes, and updates Indexd
 // and potentially Metadata Service
-func IndexS3Object(s3objectURL string) {
-	configInfo := getConfigInfo()
+func IndexS3Object(s3objectURL string) error {
+	configInfo := mustGetConfigInfo()
 
 	s3objectURL, _ = url.QueryUnescape(s3objectURL)
 	u, err := url.Parse(s3objectURL)
@@ -99,7 +99,7 @@ func IndexS3Object(s3objectURL string) {
 	} else if rev == "" {
 		log.Printf("Indexd record with guid %s already has size and hashes", uuid)
 		updateMetadataObjectWrapper(uuid, configInfo, mdsUploadedBody)
-		return
+		return nil
 	}
 	log.Printf("Got rev %s from Indexd for record %s", rev, uuid)
 
@@ -109,16 +109,16 @@ func IndexS3Object(s3objectURL string) {
 	client, err := CreateNewAwsClient()
 	if err != nil {
 		updateMetadataObjectWrapper(uuid, configInfo, mdsErrorBody)
-		log.Panicf("Can not create AWS client. Detail %s\n\n", err)
+		return fmt.Errorf("Can not create AWS client. Detail %s\n\n", err)
 	}
 
 	log.Printf("Start to compute hashes for %s", key)
 	hashes, objectSize, err := CalculateBasicHashes(client, bucket, key)
 	if err != nil {
 		updateMetadataObjectWrapper(uuid, configInfo, mdsErrorBody)
-		log.Panicf("Can not compute hashes for %s. Detail %s ", key, err)
+		return fmt.Errorf("Can not compute hashes for %s. Detail %s ", key, err)
 	}
-	log.Printf("Finish to compute hashes for %s", key)
+	log.Printf("Finished computing hashes for %s", key)
 
 	indexdHashesBody := fmt.Sprintf(`{"size": %d, "urls": ["%s"], "hashes": {"md5": "%s", "sha1":"%s", "sha256": "%s", "sha512": "%s", "crc": "%s"}}`,
 		objectSize, s3objectURL, hashes.Md5, hashes.Sha1, hashes.Sha256, hashes.Sha512, hashes.Crc32c)
@@ -126,12 +126,14 @@ func IndexS3Object(s3objectURL string) {
 	resp, err := UpdateIndexdRecord(uuid, rev, &configInfo.Indexd, []byte(indexdHashesBody))
 	if err != nil {
 		updateMetadataObjectWrapper(uuid, configInfo, mdsErrorBody)
-		log.Panicf("Could not update Indexd record %s. Error: %s", uuid, err)
+		return fmt.Errorf("Could not update Indexd record %s. Error: %s", uuid, err)
 	} else if resp.StatusCode != http.StatusOK {
 		updateMetadataObjectWrapper(uuid, configInfo, mdsErrorBody)
-		log.Panicf("Could not update Indexd record %s. Response Status Code: %d", uuid, resp.StatusCode)
+		return fmt.Errorf("Could not update Indexd record %s. Response Status Code: %d", uuid, resp.StatusCode)
 	}
 	log.Printf("Updated Indexd record %s with hash info. Response Status Code: %d", uuid, resp.StatusCode)
 
 	updateMetadataObjectWrapper(uuid, configInfo, mdsUploadedBody)
+
+	return nil
 }

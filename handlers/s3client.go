@@ -27,13 +27,17 @@ func CreateNewAwsClient() (*AwsClient, error) {
 			Region: aws.String(os.Getenv("AWS_REGION")),
 			Credentials: credentials.NewStaticCredentials(
 				os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
+			Endpoint: aws.String(os.Getenv("AWS_ENDPOINT")),
 		})
 	} else {
 		region := os.Getenv("AWS_REGION")
 		if region == "" {
 			region = "us-east-1"
 		}
-		sess, err = session.NewSession(&aws.Config{Region: aws.String(region)})
+		sess, err = session.NewSession(&aws.Config{
+			Region:   aws.String(region),
+			Endpoint: aws.String(os.Getenv("AWS_ENDPOINT")),
+		})
 
 	}
 	if err != nil {
